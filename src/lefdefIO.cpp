@@ -54,6 +54,9 @@
 
 #include "timing.h"
 #include "timingSta.h"
+
+#include "pinPlace.h"
+
 #include <iostream>
 #include <boost/functional/hash.hpp>
 
@@ -2081,4 +2084,24 @@ void RouteInstance::SetScaleFactor() {
 
 void RouteInstance::SetCircuitInst() {
   this->_ckt = &__ckt;
+}
+
+
+////////////////////////////////////////////////
+//
+// PinPlacement Part 
+//
+////////////////////////////////////////////////
+
+
+void IoPlacementInst::SetScaleFactor() {
+  this-> unitX_ = (float) unitX;
+  this-> unitY_ = (float) unitY;
+  this-> offsetX_ = (float) offsetX;
+  this-> offsetY_ = (float) offsetY;
+  this-> defDbu_ = (float) l2d;
+}
+
+void IoPlacementInst::SetCircuitInst() {
+  this-> ckt_= &__ckt;
 }

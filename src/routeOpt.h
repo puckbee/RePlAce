@@ -30,6 +30,26 @@ struct Layer {
   }
 };
 
+// layerInstance
+class LayerInstance {
+private:
+  vector<Layer> _layers;
+  HASH_MAP<string, int> _layerMap;
+
+public: 
+  LayerInstance();
+  void FillLayerStor(Replace::Circuit* _ckt);
+
+  // Layers
+  Layer& GetLayer( int layerIdx ) { return _layers[layerIdx]; };
+  const vector<Layer>* Layers() { return &_layers; };
+  int LayerCount() { return _layers.size(); };
+  
+  // LayerMap
+  HASH_MAP<string, int>& LayerMap() {return _layerMap; };
+};
+
+
 struct ReducedTrack {
   int layerIdx;
   int lx, ly, ux, uy;
@@ -46,10 +66,13 @@ struct ReducedTrack {
   }
 };
 
+
+// RouteInstance
 class RouteInstance {
   private:
 
-    vector<Layer> _layerStor;
+    LayerInstance _layerInst;
+
     // LayerIdx --> get corresponding track Count
     vector<int> _trackCount;
 
@@ -107,13 +130,13 @@ class RouteInstance {
 
     // located in routeOpt.cpp
     void Init();
-    void FillLayerStor();
     void FillLayerCapacityRatio(string fileName); 
 
     // helper function
-    int GetLayerCount() { return _layerStor.size(); };
-    Layer& GetLayer( int layerIdx ) { return _layerStor[layerIdx]; };
-    vector<Layer>& GetLayerStor() {return _layerStor; };
+    int GetLayerCount() { return  _layerInst.LayerCount(); }; 
+    HASH_MAP<string, int>& GetLayerMap() { return _layerInst.LayerMap(); };
+    const vector<Layer>* GetLayerStor() { return _layerInst.Layers(); }; 
+
     vector<int>& GetTrackCount() {return _trackCount; };
     int GetTrackCount(int layerIdx) { return _trackCount[layerIdx]; };
     float GetTileSizeX() { return _tileSizeX; };
@@ -123,7 +146,6 @@ class RouteInstance {
     float GetGridOriginX() {return _gridOriginX; };
     float GetGridOriginY() {return _gridOriginY; };
     Replace::Circuit* GetCircuitInst() { return _ckt; };
-    HASH_MAP<string, int>& GetLayerMap() {return _layerMap; };
     
     int GetReducedTrackCount() { return _bsReducedTrackStor.size(); };
     ReducedTrack& GetReducedTrack( int idx ) { return _bsReducedTrackStor[idx]; };

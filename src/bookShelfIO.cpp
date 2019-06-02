@@ -2737,8 +2737,8 @@ void WriteRoute(char *dir_tier, bool isNameConvert, RouteInstance& routeInst,
   
   int space = 8; 
   fprintf( fp_route, "VerticalCapacity   : ");
-  for(auto& curLayer: routeInst.GetLayerStor() ) {
-    int layerIdx = &curLayer - &routeInst.GetLayerStor()[0];
+  for(auto& curLayer: *routeInst.GetLayerStor() ) {
+    int layerIdx = &curLayer - &routeInst.GetLayerStor()[0][0];
     if( isMetal1Removed && layerIdx == 0 ){
       fprintf( fp_route, "%*d", space, 0 );
     }
@@ -2751,8 +2751,8 @@ void WriteRoute(char *dir_tier, bool isNameConvert, RouteInstance& routeInst,
   fprintf(fp_route, "\n");
   
   fprintf( fp_route, "HorizontalCapacity : ");
-  for(auto& curLayer: routeInst.GetLayerStor() ) {
-    int layerIdx = &curLayer - &routeInst.GetLayerStor()[0];
+  for(auto& curLayer: *routeInst.GetLayerStor() ) {
+    int layerIdx = &curLayer - &routeInst.GetLayerStor()[0][0];
     if( isMetal1Removed && layerIdx == 0 ){
       fprintf( fp_route, "%*d", space, 0 );
     }
@@ -2871,7 +2871,7 @@ void WriteRoute(char *dir_tier, bool isNameConvert, RouteInstance& routeInst,
       isBlockage = true;
       layerIdx = new vector<int>;
       // HARDCODE: All of layers 
-      for(int i=0; i<routeInst.GetLayerStor().size(); i++) {
+      for(int i=0; i<routeInst.GetLayerCount(); i++) {
         layerIdx->push_back(i);
       }
     }

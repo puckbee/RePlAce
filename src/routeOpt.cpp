@@ -60,28 +60,17 @@
 RouteInstance routeInst;
 using std::ifstream;
 
-void RouteInstance::Init(){
+
+//////////////////////////////////////////////////////////////////////
+// Layer Instance
+//
+LayerInstance::LayerInstance() {
 #ifdef USE_GOOGLE_HASH
   _layerMap.set_empty_key(INIT_STR);
 #endif
-  SetReplaceStructure(); 
-  SetScaleFactor();
-  SetCircuitInst();
-
-  FillLayerStor();
-  FillGCellXY(); 
-  FillTrack(); 
-  FillGridXY();
-
-  // for Bookshelf's route
-  FillForReducedTrackStor();
 }
 
-void RouteInstance::SetReplaceStructure() {
-
-}
-
-void RouteInstance::FillLayerStor() {
+void LayerInstance::FillLayerStor(Replace::Circuit* _ckt) {
   if( _ckt->lefLayerStor.size() == 0) {
     cout << "ERROR: RouteInst failed to get LAYER information from LEF" << endl;
     exit(0);
@@ -139,25 +128,47 @@ void RouteInstance::FillLayerStor() {
     }
     width = curLayer.width();
 
-    _layerMap[ layerName ] = _layerStor.size();
-    _layerStor.push_back( Layer( layerName, pitchX, pitchY, width, layerDir) );
+    _layerMap[ layerName ] = _layers.size();
+    _layers.push_back( Layer( layerName, pitchX, pitchY, width, layerDir) );
   }
-//  for(auto& curLayer : _layerStor) {
+//  for(auto& curLayer : _layers) {
 //    curLayer.Dump();
 //  }
 }
 
+//////////////////////////////////////////////////////////////////////
+// Route Instance
+//
+void RouteInstance::Init(){
+  SetReplaceStructure(); 
+  SetScaleFactor();
+  SetCircuitInst();
+
+  _layerInst.FillLayerStor(_ckt);
+  FillGCellXY(); 
+  FillTrack(); 
+  FillGridXY();
+
+  // for Bookshelf's route
+  FillForReducedTrackStor();
+}
+
+void RouteInstance::SetReplaceStructure() {
+
+}
+
+
 void RouteInstance::FillGCellXY() {
-  if( _layerStor.size() < 2) {
+  if( _layerInst.LayerCount() < 2) {
     cout << "ERROR: The # LAYERs must be at least 2, current Size: " 
-      << _layerStor.size() << endl;
+      << _layerInst.LayerCount() << endl;
     exit(0);
   }
   // metal2's height and width
 //  _gCellSizeX = 15 * _layerStor[1].layerPitchX;
 //  _gCellSizeY = 15 * _layerStor[1].layerPitchY;
-  _gCellSizeX = 15 * _layerStor[2].layerPitchY;
-  _gCellSizeY = 15 * _layerStor[2].layerPitchX;
+  _gCellSizeX = 15 * _layerInst.Layer(2).layerPitchY;
+  _gCellSizeY = 15 * _layerInst.Layer(2).layerPitchX;
 //  _gCellSizeX = _ckt->lefSiteStor[0].sizeY();
 //  _gCellSizeY = _ckt->lefSiteStor[0].sizeY();
 
@@ -191,13 +202,13 @@ void RouteInstance::FillLayerCapacityRatio( string fileName ) {
 }
 
 void RouteInstance::FillTrack() {
-  for(auto& curLayer : _layerStor) {
+  for(auto& curLayer : _layerInst.Layers()) {
     auto lcPtr = _layerCapacityMap.find(curLayer.layerName);
 
     // control the track resources from M3~M9
     // M1 and M2 is required for pin access
     float currentCapRatio = (lcPtr == _layerCapacityMap.end())? 
-      (&curLayer - &_layerStor[0] <= 1)? 
+      (&curLayer - &_layerInst.Layer(0) <= 1)? 
         1.00 : globalRouterCapRatio 
       : lcPtr->second;
     _trackCount.push_back( 
@@ -260,8 +271,8 @@ void RouteInstance::FillForReducedTrackStor() {
     cout << "diffX: " << diffX << ", diffY: " << diffY << endl;
 
     // for Vertical Stripe in terms of horizontal coordinate
-    for(auto& curLayer: _layerStor) {
-      int layerIdx = &curLayer - &_layerStor[0];
+    for(auto& curLayer: _layerInst.Layers()) {
+      int layerIdx = &curLayer - &_layerInst.Layer(0);
       // only for Vertical Routing Layer
       if( curLayer.layerDirection == Horizontal ) {
         continue;
@@ -275,8 +286,8 @@ void RouteInstance::FillForReducedTrackStor() {
     }
 
     // for Horizontal Stripe in terms of vertical coordinate
-    for(auto& curLayer: _layerStor) {
-      int layerIdx = &curLayer - &_layerStor[0];
+    for(auto& curLayer: _layerInst.Layers()) {
+      int layerIdx = &curLayer - &_layerInst.Layer(0);
       // only for Horizontal Routing Layer
       if( curLayer.layerDirection == Vertical ) {
         continue;
@@ -290,8 +301,8 @@ void RouteInstance::FillForReducedTrackStor() {
     }
 
     // for the Intersection of horizontal and vertical stripes.
-    for(auto& curLayer: _layerStor) {
-      int layerIdx = &curLayer - &_layerStor[0];
+    for(auto& curLayer: _layerInst.Layers() {
+      int layerIdx = &curLayer - &_layerInst.Layer(0);
       _bsReducedTrackStor.push_back( 
         ReducedTrack( 
           layerIdx, 
